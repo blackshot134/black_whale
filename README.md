@@ -122,9 +122,7 @@ __________________________________
 ⚠️ Disclaimer
 Educational Purpose Only - This project is created for educational and research purposes. The SMS bomber functionality is for testing your own phone numbers only. Users are responsible for complying with all applicable laws and regulations. The developers assume no liability for misuse of this tool.
 __________________________________
-📄 License
-MIT License - See LICENSE file for details
-__________________________________
+
 🤝 Contributing
 Fork the repository
 
