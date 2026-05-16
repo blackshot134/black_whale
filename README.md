@@ -144,6 +144,12 @@ GitHub:(https://github.com/blackshot134)
 ⭐ Show Your Support
 If you found this project helpful, please give it a ⭐ on GitHub!
 __________________________________
+how install :
+git clone https://github.com/yourusername/blackwhale.git
+cd blackwhale
+pip install -r requirements.txt
+python main.py
+__________________________________
 📄 LICENSE
 MIT License
 
