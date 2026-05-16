@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Black Whale{% endblock %}
+
+{% block nav_links %}
+<a href="/">HOME</a>
+<a href="/login">LOGIN</a>
+<a href="/register">REGISTER</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto; background: rgba(255,255,255,0.05); border-radius: 30px; padding: 40px;">
+    <h2 style="text-align: center; margin-bottom: 30px;">Create Account</h2>
+    
+    <form id="registerForm">
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #ccc;">Email Address</label>
+            <input type="email" id="email" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white;">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #ccc;">Username</label>
+            <input type="text" id="username" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white;">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #ccc;">Full Name (Optional)</label>
+            <input type="text" id="fullname" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white;">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #ccc;">Password</label>
+            <input type="password" id="password" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white;">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #ccc;">Confirm Password</label>
+            <input type="password" id="confirm_password" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white;">
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;">Register</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 20px; color: #aaa;">
+        Already have an account? <a href="/login" style="color: #00d4ff;">Login</a>
+    </p>
+    
+    <div id="message" style="margin-top: 20px; text-align: center;"></div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    
+    if (password !== confirm) {
+        document.getElementById('message').innerHTML = '<span style="color: #ff4444;">Passwords do not match!</span>';
+        return;
+    }
+    
+    const formData = new URLSearchParams();
+    formData.append('email', document.getElementById('email').value);
+    formData.append('username', document.getElementById('username').value);
+    formData.append('password', password);
+    formData.append('full_name', document.getElementById('fullname').value);
+    
+    const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+        window.location.href = `/verify?email=${encodeURIComponent(result.email)}`;
+    } else {
+        document.getElementById('message').innerHTML = `<span style="color: #ff4444;">${result.message}</span>`;
+    }
+});
+</script>
+{% endblock %}

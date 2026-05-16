@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    .stat-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        transition: 0.2s;
+    }
+    .stat-box:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-3px);
+    }
+    .stat-icon {
+        font-size: 50px;
+        color: #00d4ff;
+        margin-bottom: 15px;
+    }
+    .progress-bar {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        height: 8px;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+    .progress-fill {
+        background: linear-gradient(90deg, #00d4ff, #0088cc);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s;
+    }
+    .status-online { color: #00ff88; }
+    .status-offline { color: #ff4444; }
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-top: 30px;
+    }
+    .quick-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        color: white;
+        transition: 0.2s;
+    }
+    .quick-card:hover {
+        background: rgba(0, 212, 255, 0.1);
+    }
+    .plan-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    .plan-bronze { background: #cd7f32; color: #000; }
+    .plan-silver { background: #c0c0c0; color: #000; }
+    .plan-gold { background: #ffd700; color: #000; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">Welcome, {{ user.username if user else 'User' }}!</h2>
+
+<div class="stats-grid">
+    <!-- User Info -->
+    <div class="stat-box">
+        <div class="stat-icon">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <h3>{{ user.username if user else 'User' }}</h3>
+        <p style="color: #aaa; font-size: 14px;">{{ user.email if user else '' }}</p>
+        <div class="plan-badge plan-{{ user.membership if user else 'bronze' }}">
+            {{ user.membership.upper() if user else 'BRONZE' }} PLAN
+        </div>
+        <p style="margin-top: 15px; font-size: 13px; color: #666;">
+            Member since: {{ user.created_at.strftime('%Y-%m-%d') if user and user.created_at else 'N/A' }}
+        </p>
+    </div>
+
+    <!-- Usage Stats -->
+    <div class="stat-box">
+        <div class="stat-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Today's Usage</h3>
+        {% if plan and daily %}
+        <div style="margin: 15px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span>📱 SMS Bomber</span>
+                <span>{{ daily.bomber_used }} / {{ plan.daily_bomber_limit }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (daily.bomber_used / plan.daily_bomber_limit * 100) if plan.daily_bomber_limit > 0 else 0 }}%"></div>
+            </div>
+        </div>
+        <div style="margin: 15px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span>🔍 Search</span>
+                <span>{{ daily.search_used }} / {{ plan.daily_search_limit }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (daily.search_used / plan.daily_search_limit * 100) if plan.daily_search_limit > 0 else 0 }}%"></div>
+            </div>
+        </div>
+        {% else %}
+        <p style="color: #aaa;">Loading usage data...</p>
+        {% endif %}
+    </div>
+
+    <!-- Service Status -->
+    <div class="stat-box">
+        <div class="stat-icon">
+            <i class="fas fa-server"></i>
+        </div>
+        <h3>Service Status</h3>
+        {% if services %}
+            {% for service in services %}
+            <div style="display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px;">
+                <span>{{ service.service_name }}</span>
+                <span class="{% if service.is_online %}status-online{% else %}status-offline{% endif %}">
+                    <i class="fas fa-{% if service.is_online %}circle{% else %}times-circle{% endif %}"></i>
+                    {% if service.is_online %}ONLINE{% else %}OFFLINE{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #aaa;">Loading services...</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <a href="/bomber" class="quick-card">
+        <i class="fas fa-bomb" style="font-size: 30px; color: #00d4ff;"></i>
+        <p style="margin-top: 10px;">SMS Bomber</p>
+    </a>
+    <a href="/scraper" class="quick-card">
+        <i class="fas fa-spider" style="font-size: 30px; color: #00d4ff;"></i>
+        <p style="margin-top: 10px;">Web Scraper</p>
+    </a>
+    <a href="/search" class="quick-card">
+        <i class="fas fa-search" style="font-size: 30px; color: #00d4ff;"></i>
+        <p style="margin-top: 10px;">Search Database</p>
+    </a>
+    {% if user and user.role == 'admin' %}
+    <a href="/admin" class="quick-card">
+        <i class="fas fa-crown" style="font-size: 30px; color: #ffd700;"></i>
+        <p style="margin-top: 10px;">Admin Panel</p>
+    </a>
+    {% endif %}
+</div>
+
+{% block scripts %}
+<script>
+async function loadUserLimits() {
+    try {
+        const response = await fetch('/api/user/limits');
+        const data = await response.json();
+        if (data && !data.error) {
+            console.log('Limits loaded:', data);
+        }
+    } catch(e) {
+        console.log('Error loading limits');
+    }
+}
+loadUserLimits();
+</script>
+{% endblock %}
+{% endblock %}

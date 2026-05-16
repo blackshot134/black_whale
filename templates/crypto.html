@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}All Cryptocurrencies - Black Whale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .crypto-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 30px;
+        background: rgba(0, 212, 255, 0.08);
+        border-radius: 30px;
+        border: 1px solid rgba(0, 212, 255, 0.15);
+    }
+    
+    .crypto-header h2 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .crypto-header h2 i {
+        color: #00d4ff;
+        margin-right: 10px;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0, 255, 136, 0.15);
+        padding: 6px 15px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        margin-top: 15px;
+    }
+    
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        background: #00ff88;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    
+    .search-box {
+        margin-bottom: 25px;
+    }
+    
+    .search-input {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        display: block;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 50px;
+        color: white;
+        font-size: 0.9rem;
+        outline: none;
+    }
+    
+    .search-input:focus {
+        border-color: #00d4ff;
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .search-input::placeholder {
+        color: #666;
+    }
+    
+    .stats-info {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 0.8rem;
+        color: #888;
+    }
+    
+    .crypto-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .crypto-card {
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(0, 212, 255, 0.12);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .crypto-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(0, 212, 255, 0.3);
+        background: rgba(255, 255, 255, 0.06);
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .coin-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .coin-info i {
+        font-size: 1.5rem;
+        color: #00d4ff;
+    }
+    
+    .coin-name {
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .coin-symbol {
+        font-size: 0.65rem;
+        color: #888;
+    }
+    
+    .coin-price {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #00ff88;
+        text-align: center;
+        margin: 12px 0;
+        font-family: monospace;
+    }
+    
+    .price-change {
+        text-align: center;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-block;
+        width: fit-content;
+        margin: 0 auto;
+    }
+    
+    .positive {
+        color: #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+    }
+    
+    .negative {
+        color: #ff4444;
+        background: rgba(255, 68, 68, 0.1);
+    }
+    
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.65rem;
+        color: #888;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 50px;
+    }
+    
+    .loading i {
+        font-size: 2rem;
+        color: #00d4ff;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 50px;
+        color: #888;
+    }
+    
+    .footer-note {
+        text-align: center;
+        margin-top: 30px;
+        padding: 20px;
+        font-size: 0.7rem;
+        color: #666;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .crypto-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .crypto-header h2 {
+            font-size: 1.3rem;
+        }
+        .coin-price {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="crypto-header">
+    <h2><i class="fas fa-globe"></i> All Cryptocurrencies</h2>
+    <p>Real-time prices from Tabdeal Exchange | Live updates every 30 seconds</p>
+    <div class="status-badge">
+        <div class="live-dot"></div>
+        <span>LIVE</span>
+        <span id="updateTime"></span>
+    </div>
+</div>
+
+<div class="search-box">
+    <input type="text" id="searchInput" class="search-input" placeholder=" Search by coin name... (BTC, ETH, TRX, etc)">
+</div>
+
+<div id="statsInfo" class="stats-info"></div>
+
+<div id="cryptoGrid" class="crypto-grid">
+    <div class="loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Loading cryptocurrency prices...</p>
+    </div>
+</div>
+
+<div class="footer-note">
+    <p><i class="fas fa-whale"></i> Black Whale Crypto | Data provided by Tabdeal Exchange API</p>
+    <p>Auto-refreshes every 30 seconds</p>
+</div>
+
+<script>
+    let allPrices = {};
+    let refreshInterval = null;
+    
+    function getCoinIcon(coinName) {
+        const icons = {
+            'BTC': 'fab fa-bitcoin',
+            'ETH': 'fab fa-ethereum',
+            'BNB': 'fab fa-bnb',
+            'XRP': 'fas fa-waveform',
+            'DOGE': 'fas fa-dog',
+            'SOL': 'fas fa-sun',
+            'ADA': 'fas fa-chart-simple',
+            'TRX': 'fas fa-fire',
+            'USDT': 'fas fa-dollar-sign',
+            'LTC': 'fab fa-bitcoin',
+            'DOT': 'fas fa-circle',
+            'MATIC': 'fas fa-shapes',
+            'SHIB': 'fas fa-dog',
+        };
+        return icons[coinName] || 'fab fa-bitcoin';
+    }
+    
+    async function loadPrices() {
+        try {
+            const response = await fetch('/crypto/api/prices');
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                allPrices = result.data;
+                displayPrices(allPrices);
+                updateTime();
+                document.getElementById('statsInfo').innerHTML = ' Total: ' + Object.keys(allPrices).length + ' currency pairs';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('cryptoGrid').innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #ff4444;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <p>Error loading data. Please refresh the page.</p>
+                    <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 20px; background: #00d4ff; border: none; border-radius: 30px; color: #000; cursor: pointer;">Refresh</button>
+                </div>
+            `;
+        }
+    }
+    
+    function displayPrices(prices, searchTerm = '') {
+        const grid = document.getElementById('cryptoGrid');
+        
+        let filtered = Object.entries(prices);
+        
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(([symbol, data]) => 
+                data.coin.toLowerCase().includes(term) || 
+                symbol.toLowerCase().includes(term)
+            );
+        }
+        
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="no-results"><i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px;"></i><p>No cryptocurrencies found matching "' + searchTerm + '"</p></div>';
+            document.getElementById('statsInfo').innerHTML = ' 0 of ' + Object.keys(prices).length + ' currency pairs';
+            return;
+        }
+        
+        filtered.sort((a, b) => b[1].price - a[1].price);
+        
+        grid.innerHTML = '';
+        
+        for (const [symbol, data] of filtered) {
+            const changeClass = data.change_24h >= 0 ? 'positive' : 'negative';
+            const changeIcon = data.change_24h >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            
+            const card = document.createElement('div');
+            card.className = 'crypto-card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="coin-info">
+                        <i class="${getCoinIcon(data.coin)}"></i>
+                        <div>
+                            <div class="coin-name">${data.coin}</div>
+                            <div class="coin-symbol">${symbol}</div>
+                        </div>
+                    </div>
+                    <div class="price-change ${changeClass}">
+                        <i class="fas ${changeIcon}"></i> ${data.change_24h >= 0 ? '+' : ''}${data.change_24h.toFixed(2)}%
+                    </div>
+                </div>
+                <div class="coin-price">
+                    ${formatNumber(data.price)} ${data.currency}
+                </div>
+                <div class="card-footer">
+                    <span> High: ${formatNumber(data.high_24)}</span>
+                    <span> Low: ${formatNumber(data.low_24)}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+        
+        document.getElementById('statsInfo').innerHTML = ' Showing ' + filtered.length + ' of ' + Object.keys(prices).length + ' currency pairs';
+    }
+    
+    function formatNumber(num) {
+        if (!num) return '0';
+        if (num > 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+        if (num > 1000000) return (num / 1000000).toFixed(2) + 'M';
+        if (num > 1000) return num.toLocaleString('en-US');
+        if (num < 0.01) return num.toFixed(6);
+        if (num < 1) return num.toFixed(4);
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('updateTime').innerHTML = ' | Updated: ' + now.toLocaleTimeString();
+    }
+    
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        displayPrices(allPrices, e.target.value);
+    });
+    
+    loadPrices();
+    
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadPrices, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Web Scraper - Black Whale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scraper-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+    }
+    
+    .scraper-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 25px;
+        padding: 25px;
+        border: 1px solid rgba(0, 212, 255, 0.15);
+    }
+    
+    .scraper-card h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .input-group {
+        margin-bottom: 15px;
+    }
+    
+    .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ccc;
+        font-size: 0.85rem;
+    }
+    
+    .input-group input, .input-group select {
+        width: 100%;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid #333;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.9rem;
+    }
+    
+    .input-group input:focus, .input-group select:focus {
+        outline: none;
+        border-color: #00d4ff;
+    }
+    
+    .scraper-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #00d4ff, #0088cc);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 10px;
+    }
+    
+    .scraper-btn:hover {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    .result-box {
+        margin-top: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .result-item {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 3px solid #00d4ff;
+    }
+    
+    .result-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .result-phone {
+        color: #00ff88;
+        font-family: monospace;
+        font-size: 1rem;
+    }
+    
+    .result-price {
+        color: #aaa;
+        font-size: 0.8rem;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .loading i {
+        font-size: 2rem;
+        color: #00d4ff;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+        color: #ff4444;
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .success-message {
+        color: #00ff88;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 15px;
+        background: rgba(0, 255, 136, 0.1);
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 25px;"><i class="fas fa-spider"></i> Web Scraper</h2>
+<p style="color: #aaa; margin-bottom: 30px;">Extract phone numbers from Sheypoor and Divar classified ads</p>
+
+<div class="scraper-container">
+    
+    <!-- Sheypoor Card -->
+    <div class="scraper-card">
+        <h3><i class="fas fa-shopping-cart"></i> Sheypoor Scraper</h3>
+        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 20px;">Extract phone numbers from Sheypoor ads (requires login with OTP)</p>
+        
+        <div class="input-group">
+            <label><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" id="sp_phone" placeholder="09123456789">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-key"></i> OTP Code</label>
+            <input type="text" id="sp_code" placeholder="6-digit verification code">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-city"></i> City</label>
+            <input type="text" id="sp_city" placeholder="tehran, shiraz, esfahan" value="tehran">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-hashtag"></i> Number of Ads</label>
+            <input type="number" id="sp_count" value="10" min="1" max="50">
+        </div>
+        <button class="scraper-btn" onclick="runSheypoor()">
+            <i class="fas fa-play"></i> Run Sheypoor Scraper
+        </button>
+        <div id="sp_result" class="result-box"></div>
+    </div>
+    
+    <!-- Divar Card -->
+    <div class="scraper-card">
+        <h3><i class="fas fa-home"></i> Divar Scraper</h3>
+        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 20px;">Extract phone numbers from Divar ads (no login required)</p>
+        
+        <div class="input-group">
+            <label><i class="fas fa-city"></i> City</label>
+            <input type="text" id="dv_city" placeholder="tehran, shiraz, esfahan" value="tehran">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-tag"></i> Category</label>
+            <select id="dv_category">
+                <option value="real-estate">🏠 Real Estate</option>
+                <option value="car">🚗 Car</option>
+                <option value="electronics">📱 Electronics</option>
+                <option value="furniture">🛋️ Furniture</option>
+                <option value="clothing">👕 Clothing</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-hashtag"></i> Number of Ads</label>
+            <input type="number" id="dv_count" value="10" min="1" max="50">
+        </div>
+        <button class="scraper-btn" onclick="runDivar()">
+            <i class="fas fa-play"></i> Run Divar Scraper
+        </button>
+        <div id="dv_result" class="result-box"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runSheypoor() {
+    const phone = document.getElementById('sp_phone').value.trim();
+    const code = document.getElementById('sp_code').value.trim();
+    const city = document.getElementById('sp_city').value.trim();
+    const count = document.getElementById('sp_count').value;
+    
+    if (!phone || !code) {
+        alert('Please enter phone number and OTP code');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('sp_result');
+    resultDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Scraping Sheypoor...</p></div>';
+    
+    try {
+        const formData = new URLSearchParams();
+        formData.append('phone', phone);
+        formData.append('code', code);
+        formData.append('city', city);
+        formData.append('count', count);
+        
+        const response = await fetch('/api/scraper/sheypoor', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            let html = '<div class="success-message">✅ ' + result.count + ' ads processed</div>';
+            result.data.forEach(ad => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-title">📌 ${ad.title.substring(0, 60)}</div>
+                        <div><span class="result-phone">📞 ${ad.phone || 'Not found'}</span></div>
+                        <div class="result-price">💰 ${ad.price || 'N/A'}</div>
+                    </div>
+                `;
+            });
+            resultDiv.innerHTML = html;
+        } else {
+            resultDiv.innerHTML = '<div class="error-message">❌ ' + (result.error || 'Failed to scrape') + '</div>';
+        }
+    } catch (error) {
+        resultDiv.innerHTML = '<div class="error-message">❌ Connection error. Please try again.</div>';
+    }
+}
+
+async function runDivar() {
+    const city = document.getElementById('dv_city').value.trim();
+    const category = document.getElementById('dv_category').value;
+    const count = document.getElementById('dv_count').value;
+    
+    const resultDiv = document.getElementById('dv_result');
+    resultDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Scraping Divar...</p></div>';
+    
+    try {
+        const formData = new URLSearchParams();
+        formData.append('city', city);
+        formData.append('category', category);
+        formData.append('count', count);
+        
+        const response = await fetch('/api/scraper/divar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            let html = '<div class="success-message">✅ ' + result.count + ' ads processed</div>';
+            result.data.forEach(ad => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-title">📌 ${ad.title.substring(0, 60)}</div>
+                        <div><span class="result-phone">📞 ${ad.phone || 'Not found'}</span></div>
+                        <div class="result-price">💰 ${ad.price || 'N/A'}</div>
+                    </div>
+                `;
+            });
+            resultDiv.innerHTML = html;
+        } else {
+            resultDiv.innerHTML = '<div class="error-message">❌ ' + (result.error || 'Failed to scrape') + '</div>';
+        }
+    } catch (error) {
+        resultDiv.innerHTML = '<div class="error-message">❌ Connection error. Please try again.</div>';
+    }
+}
+</script>
+{% endblock %}

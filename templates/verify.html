@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Email - Black Whale{% endblock %}
+
+{% block nav_links %}
+<a href="/">HOME</a>
+<a href="/login">LOGIN</a>
+<a href="/register">REGISTER</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto; background: rgba(255,255,255,0.05); border-radius: 30px; padding: 40px; text-align: center;">
+    <i class="fas fa-envelope" style="font-size: 60px; color: #00d4ff; margin-bottom: 20px;"></i>
+    <h2>Verify Your Email</h2>
+    <p style="color: #aaa; margin: 20px 0;">We sent a 6-digit verification code to <strong id="emailDisplay">{{ email }}</strong></p>
+    
+    <form id="verifyForm">
+        <input type="hidden" id="email" value="{{ email }}">
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="code" placeholder="Enter 6-digit code" maxlength="6" required
+                   style="width: 100%; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid #00d4ff; border-radius: 10px; color: white; text-align: center; font-size: 24px; letter-spacing: 5px;">
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">Verify</button>
+    </form>
+    
+    <p style="margin-top: 20px; color: #aaa;">
+        Didn't receive code? <a href="#" id="resendBtn" style="color: #00d4ff;">Resend</a>
+    </p>
+    
+    <div id="message" style="margin-top: 20px;"></div>
+</div>
+
+<script>
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new URLSearchParams();
+    formData.append('email', document.getElementById('email').value);
+    formData.append('code', document.getElementById('code').value);
+    
+    const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+        window.location.href = '/login';
+    } else {
+        document.getElementById('message').innerHTML = `<span style="color: #ff4444;">${result.message}</span>`;
+    }
+});
+
+document.getElementById('resendBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    
+    const formData = new URLSearchParams();
+    formData.append('email', email);
+    
+    const response = await fetch('/api/resend-code', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData
+    });
+    
+    const result = await response.json();
+    document.getElementById('message').innerHTML = `<span style="color: #00ff88;">${result.message}</span>`;
+});
+</script>
+{% endblock %}

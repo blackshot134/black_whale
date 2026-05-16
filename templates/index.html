@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Black Whalle - Home{% endblock %}
+
+{% block nav_links %}
+<a href="/">HOME</a>
+<a href="/login">LOGIN</a>
+<a href="/register">REGISTER</a>
+{% endblock %}
+
+{% block content %}
+<div class="hero" style="text-align: center; padding: 60px 20px;">
+    <i class="fas fa-shield-horned" style="font-size: 80px; color: #00d4ff; margin-bottom: 20px;"></i>
+    <h1 style="font-size: 48px; background: linear-gradient(135deg, #fff, #00d4ff); background-clip: text; -webkit-background-clip: text; color: transparent;">Black Whale Security</h1>
+    <p style="font-size: 20px; color: #aaa; max-width: 600px; margin: 20px auto;">Professional SMS Bomber, Web Scraper & Intruder Detection System</p>
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+        <a href="/register" class="btn">Get Started</a>
+        <a href="/login" class="btn btn-outline">Login</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 50px;">
+    <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 25px; text-align: center;">
+        <i class="fas fa-bomb" style="font-size: 40px; color: #00d4ff;"></i>
+        <h3 style="margin: 15px 0;">SMS Bomber</h3>
+        <p style="color: #aaa;">85+ working APIs with multi-threading optimization</p>
+    </div>
+    <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 25px; text-align: center;">
+        <i class="fas fa-spider" style="font-size: 40px; color: #00d4ff;"></i>
+        <h3 style="margin: 15px 0;">Web Scraper</h3>
+        <p style="color: #aaa;">Extract phone numbers from Sheypoor & Divar</p>
+    </div>
+    <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 25px; text-align: center;">
+        <i class="fas fa-crown" style="font-size: 40px; color: #00d4ff;"></i>
+        <h3 style="margin: 15px 0;">Membership Plans</h3>
+        <p style="color: #aaa;">Bronze (Free), Silver ($9.99), Gold ($19.99)</p>
+    </div>
+</div>
+{% endblock %}

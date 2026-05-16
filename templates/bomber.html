@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}SMS Bomber - Black Whale{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-success { color: #00ff88; font-size: 24px; font-weight: bold; }
+    .stats-failed { color: #ff4444; font-size: 24px; font-weight: bold; }
+    .stats-total { color: #00d4ff; font-size: 24px; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="background: rgba(255,255,255,0.05); border-radius: 30px; padding: 40px;">
+        <h2 style="text-align: center; margin-bottom: 10px;">
+            <i class="fas fa-bomb"></i> SMS Bomber
+        </h2>
+        <p style="text-align: center; color: #aaa; margin-bottom: 30px;">85+ Working APIs | Multi-Threaded | Real-time Stats</p>
+        
+        <form id="bomberForm">
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #ccc;">Target Phone Number</label>
+                <input type="tel" id="phone" placeholder="09123456789" required
+                       style="width: 100%; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white; font-size: 18px;">
+            </div>
+            
+            <button type="submit" class="btn" id="startBtn" style="width: 100%;">
+                <i class="fas fa-play"></i> Start Bomber
+            </button>
+        </form>
+        
+        <div id="stats" style="margin-top: 30px; display: none;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                <div>
+                    <p style="color: #aaa;">Success</p>
+                    <p class="stats-success" id="successCount">0</p>
+                </div>
+                <div>
+                    <p style="color: #aaa;">Failed</p>
+                    <p class="stats-failed" id="failedCount">0</p>
+                </div>
+                <div>
+                    <p style="color: #aaa;">Total</p>
+                    <p class="stats-total" id="totalCount">0</p>
+                </div>
+            </div>
+            <div class="progress-bar" style="margin-top: 20px;">
+                <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <p id="statusMessage" style="text-align: center; margin-top: 15px; color: #00d4ff;"></p>
+        </div>
+        
+        <div id="errorMessage" style="margin-top: 20px; text-align: center; color: #ff4444;"></div>
+        <div id="limitMessage" style="margin-top: 10px; text-align: center; color: #ffaa00;"></div>
+    </div>
+</div>
+
+<script>
+let isRunning = false;
+let statusInterval = null;
+
+document.getElementById('bomberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (isRunning) {
+        alert('Bomber is already running!');
+        return;
+    }
+    
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone.match(/^09[0-9]{9}$/)) {
+        document.getElementById('errorMessage').innerHTML = 'Invalid phone number! Must be 11 digits starting with 09';
+        return;
+    }
+    
+    document.getElementById('errorMessage').innerHTML = '';
+    document.getElementById('limitMessage').innerHTML = '';
+    document.getElementById('stats').style.display = 'block';
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('startBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+    
+    const formData = new URLSearchParams();
+    formData.append('phone', phone);
+    
+    try {
+        const response = await fetch('/api/bomber/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('successCount').innerHTML = result.stats.success;
+            document.getElementById('failedCount').innerHTML = result.stats.failed;
+            document.getElementById('totalCount').innerHTML = result.stats.total;
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('statusMessage').innerHTML = '✅ Completed!';
+            
+            if (result.remaining !== undefined) {
+                document.getElementById('limitMessage').innerHTML = `Remaining today: ${result.remaining} requests (${result.membership.toUpperCase()} plan)`;
+            }
+        } else {
+            document.getElementById('errorMessage').innerHTML = result.error || 'Failed to start bomber';
+        }
+    } catch (error) {
+        document.getElementById('errorMessage').innerHTML = 'Connection error';
+    } finally {
+        isRunning = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i> Start Bomber';
+        
+        setTimeout(() => {
+            document.getElementById('stats').style.display = 'none';
+        }, 5000);
+    }
+});
+
+
+async function loadLimits() {
+    const response = await fetch('/api/user/limits');
+    const data = await response.json();
+    if (!data.error) {
+        document.getElementById('limitMessage').innerHTML = `${data.membership.toUpperCase()} plan: ${data.daily_bomber_limit - data.bomber_used} / ${data.daily_bomber_limit} remaining today`;
+    }
+}
+loadLimits();
+</script>
+{% endblock %}

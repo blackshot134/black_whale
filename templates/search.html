@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Search Database - Black Whale{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="background: rgba(255,255,255,0.05); border-radius: 30px; padding: 40px;">
+        <h2 style="text-align: center;"><i class="fas fa-search"></i> Search Phone Number</h2>
+        <p style="text-align: center; color: #aaa; margin: 15px 0;">Search our database of extracted phone numbers from Sheypoor & Divar</p>
+        
+        <form id="searchForm">
+            <div style="margin-bottom: 20px;">
+                <input type="tel" id="phone" placeholder="Enter phone number (09xxxxxxxxx)" required
+                       style="width: 100%; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 10px; color: white; font-size: 18px; text-align: center;">
+            </div>
+            <button type="submit" class="btn" style="width: 100%;">Search</button>
+        </form>
+        
+        <div id="results" style="margin-top: 30px; display: none;"></div>
+        <div id="loading" style="text-align: center; margin-top: 30px; display: none;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 30px; color: #00d4ff;"></i>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone.match(/^09[0-9]{9}$/)) {
+        alert('Invalid phone number!');
+        return;
+    }
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    
+    const formData = new URLSearchParams();
+    formData.append('phone', phone);
+    
+    const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData
+    });
+    
+    const result = await response.json();
+    document.getElementById('loading').style.display = 'none';
+    
+    if (result.success) {
+        if (result.found) {
+            let html = `<div style="background: #00ff8820; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                            ✅ Found ${result.count} result(s) for ${phone}
+                        </div>`;
+            result.results.forEach(item => {
+                html += `<div style="border-bottom: 1px solid #333; padding: 15px;">
+                            <strong>${item.title}</strong><br>
+                            📞 <span style="color: #00ff88;">${item.phone}</span><br>
+                            💰 ${item.price}<br>
+                            📱 Source: ${item.source}<br>
+                            🔗 <a href="${item.link}" target="_blank" style="color: #00d4ff;">View Original Ad</a>
+                        </div>`;
+            });
+            document.getElementById('results').innerHTML = html;
+        } else {
+            document.getElementById('results').innerHTML = `<div style="text-align: center; padding: 30px;">
+                <i class="fas fa-search" style="font-size: 50px; color: #888;"></i>
+                <p>No results found for ${phone}</p>
+            </div>`;
+        }
+        document.getElementById('results').style.display = 'block';
+    } else {
+        alert('Error: ' + result.error);
+    }
+});
+</script>
+{% endblock %}

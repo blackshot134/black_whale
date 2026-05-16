@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .admin-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .admin-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .admin-table th, .admin-table td {
+        text-align: left;
+        padding: 12px 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .admin-table th {
+        color: #00d4ff;
+        font-weight: 600;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .status-online { color: #00ff88; }
+    .status-offline { color: #ff4444; }
+    .upgrade-select {
+        background: #1a1a2e;
+        border: 1px solid #333;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .toggle-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .toggle-btn:hover {
+        background: rgba(0, 212, 255, 0.3);
+    }
+    .log-item {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .log-time {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .log-action {
+        color: #00d4ff;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .log-details {
+        font-size: 13px;
+        color: #aaa;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">
+    <i class="fas fa-crown" style="color: #ffd700;"></i> Admin Panel
+</h2>
+
+<!-- Users Section -->
+<div class="admin-section">
+    <div class="admin-title">
+        <i class="fas fa-users"></i> User Management
+    </div>
+    
+    {% if users %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td><strong>{{ u.username }}</strong></td>
+                <td style="color: #aaa; font-size: 13px;">{{ u.email }}</td>
+                <td>
+                    <span class="plan-badge" style="background: 
+                        {% if u.membership == 'bronze' %}#cd7f32
+                        {% elif u.membership == 'silver' %}#c0c0c0
+                        {% else %}#ffd700{% endif %}; 
+                        color: #000; padding: 2px 10px; border-radius: 20px; font-size: 12px;">
+                        {{ u.membership.upper() }}
+                    </span>
+                </td>
+                <td>
+                    {% if u.is_active %}
+                    <span style="color: #00ff88;">✓ Active</span>
+                    {% else %}
+                    <span style="color: #ff4444;">✗ Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <select onchange="upgradeUser({{ u.id }}, this.value)" class="upgrade-select">
+                        <option value="bronze" {% if u.membership == 'bronze' %}selected{% endif %}>🥉 Bronze</option>
+                        <option value="silver" {% if u.membership == 'silver' %}selected{% endif %}>🥈 Silver</option>
+                        <option value="gold" {% if u.membership == 'gold' %}selected{% endif %}>🥇 Gold</option>
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 20px;">No users found</p>
+    {% endif %}
+</div>
+
+<!-- Services Section -->
+<div class="admin-section">
+    <div class="admin-title">
+        <i class="fas fa-server"></i> Service Status Control
+    </div>
+    
+    {% if services %}
+        {% for service in services %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div>
+                <i class="fas fa-{% if 'Bomber' in service.service_name %}bomb{% elif 'Sheypoor' in service.service_name %}shopping-cart{% elif 'Divar' in service.service_name %}home{% else %}database{% endif %}" 
+                   style="color: #00d4ff; width: 30px;"></i>
+                <span style="margin-left: 10px;">{{ service.service_name }}</span>
+            </div>
+            <div>
+                <span class="status-badge {% if service.is_online %}status-online{% else %}status-offline{% endif %}">
+                    <i class="fas fa-{% if service.is_online %}circle{% else %}times-circle{% endif %}"></i>
+                    {% if service.is_online %}ONLINE{% else %}OFFLINE{% endif %}
+                </span>
+                <button onclick="toggleService({{ service.id }}, {{ 'false' if service.is_online else 'true' }})" 
+                        class="toggle-btn" style="margin-left: 15px;">
+                    <i class="fas fa-sync-alt"></i> Toggle
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 20px;">No services found</p>
+    {% endif %}
+</div>
+
+<!-- Logs Section -->
+<div class="admin-section">
+    <div class="admin-title">
+        <i class="fas fa-history"></i> Recent Activity Logs
+    </div>
+    
+    <div style="max-height: 400px; overflow-y: auto;">
+        {% if logs %}
+            {% for log in logs %}
+            <div class="log-item">
+                <div class="log-time">
+                    <i class="far fa-clock"></i> 
+                    {% if log.created_at %}
+                        {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    {% else %}
+                        Unknown time
+                    {% endif %}
+                </div>
+                <div class="log-action">
+                    <i class="fas fa-tag"></i> {{ log.action if log.action else 'Unknown action' }}
+                </div>
+                <div class="log-details">
+                    {{ log.details[:100] if log.details else 'No details' }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <p style="text-align: center; color: #666; padding: 20px;">No logs found</p>
+        {% endif %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+async function upgradeUser(userId, membership) {
+    const formData = new URLSearchParams();
+    formData.append('user_id', userId);
+    formData.append('membership', membership);
+    
+    try {
+        const response = await fetch('/api/admin/user/upgrade', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to upgrade user'));
+        }
+    } catch(e) {
+        alert('Connection error. Please try again.');
+    }
+}
+
+async function toggleService(serviceId, newStatus) {
+    const formData = new URLSearchParams();
+    formData.append('service_id', serviceId);
+    formData.append('is_online', newStatus);
+    
+    try {
+        const response = await fetch('/api/admin/service/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: formData
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to toggle service'));
+        }
+    } catch(e) {
+        alert('Connection error. Please try again.');
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}
